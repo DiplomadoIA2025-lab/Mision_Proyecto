@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Misiones de Proyecto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Inter:wght@400;500;700;900&family=Teko:wght@600&family=Montserrat:wght@400;700&family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0c1427;
+            background-image:
+                radial-gradient(at 27% 37%, hsla(215, 98%, 62%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 52% 99%, hsla(355, 98%, 62%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 10% 29%, hsla(256, 96%, 67%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 97% 96%, hsla(38, 60%, 74%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
+                radial-gradient(at 79% 53%, hsla(343, 68%, 79%, 0.1) 0px, transparent 50%);
+        }
+        .font-condensed { font-family: 'Roboto Condensed', sans-serif; }
+        .font-teko { font-family: 'Teko', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .option-button:hover:not(:disabled) {
+            background-color: #00aaff;
+            border-color: #00aaff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 170, 255, 0.3);
+        }
+        .mission-card:not(.locked):hover {
+            transform: scale(1.02);
+            border-color: #00aaff;
+            box-shadow: 0 10px 30px rgba(0, 170, 255, 0.1);
+        }
+        .mission-card.locked {
+            filter: grayscale(80%);
+        }
+        .progress-bar-fill { transition: width 0.5s ease-in-out; }
+        .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
+        .modal-leave { animation: fadeOut 0.3s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9); } }
+        
+        #diploma-screen {
+            background-color: #f8f9fa;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .diploma-container {
+            border: 1px solid #dee2e6;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+        .diploma-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 199, 44, 0.1), transparent 30%);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .seal {
+            width: 130px;
+            height: 130px;
+            background: linear-gradient(145deg, #0A4D68, #083b50);
+            border-radius: 50%;
+            position: relative;
+            color: #FFC72C;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 6px double #FFC72C;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .seal-text {
+            font-family: 'Teko', sans-serif;
+            font-size: 24px;
+            line-height: 1;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body class="text-white">
+
+    <div id="game-container" class="min-h-screen flex items-center justify-center p-4">
+
+        <!-- Name Input Screen -->
+        <div id="name-screen" class="text-center w-full max-w-lg mx-auto">
+            <h1 class="text-4xl md:text-5xl font-black font-condensed uppercase tracking-wider mb-4 text-cyan-400">ACCESO AL CENTRO DE ENTRENAMIENTO</h1>
+            <p class="text-gray-300 mb-8">Identifícate para iniciar tu carrera como Jefe/a de Proyecto.</p>
+            <div class="glass-card rounded-2xl p-8">
+                <label for="player-name" class="block mb-2 text-lg font-bold">Introduce tu nombre:</label>
+                <input type="text" id="player-name" class="w-full bg-gray-900 text-white text-center text-xl p-3 rounded-lg border-2 border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-400" placeholder="Tu Nombre Aquí">
+                <button id="submit-name-button" class="mt-6 w-full bg-cyan-500 text-black font-bold text-xl py-3 px-10 rounded-full transition-transform transform hover:scale-105 shadow-lg shadow-cyan-500/30">Ingresar a Misiones</button>
+            </div>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="hidden text-center w-full max-w-7xl mx-auto">
+            <h1 class="text-5xl md:text-6xl font-black font-condensed uppercase tracking-wider mb-2 text-cyan-400">CENTRO DE ENTRENAMIENTO</h1>
+            <p id="welcome-message" class="text-gray-300 text-xl mb-10"></p>
+            <div id="missions-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+                <!-- Mission cards will be injected here -->
+            </div>
+            <button id="reset-all-button" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full transition-transform transform hover:scale-105">REINICIAR TODO EL PROGRESO</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden w-full max-w-4xl">
+             <div class="flex justify-start mb-4">
+                <button id="back-to-menu-btn" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-full hover:bg-gray-600">← Volver al Menú</button>
+            </div>
+            <div id="status-bar" class="mb-6">
+                <div class="flex justify-between items-center mb-2 text-gray-300 font-condensed">
+                    <span id="stage-name" class="text-xl tracking-wider"></span>
+                    <span id="score" class="text-xl"></span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-4"><div id="progress-bar" class="bg-gradient-to-r from-cyan-400 to-blue-500 h-4 rounded-full progress-bar-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="glass-card rounded-2xl p-8">
+                <div class="flex items-center mb-6">
+                    <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-3xl font-bold mr-4 shrink-0"><span id="avatar"></span></div>
+                    <div>
+                        <h3 id="question-title" class="text-2xl font-bold"></h3>
+                        <p id="question-text" class="text-gray-300"></p>
+                    </div>
+                </div>
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden w-full max-w-4xl">
+            <div class="flex justify-start mb-4">
+                <button id="results-back-to-menu-btn" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-full hover:bg-gray-600">← Volver al Menú</button>
+            </div>
+            <h2 id="results-title" class="text-4xl font-bold font-condensed text-cyan-400 mb-6 text-center">INFORME DE MISIÓN</h2>
+            <div id="results-container" class="space-y-4"></div>
+        </div>
+
+        <!-- Diploma Screen -->
+        <div id="diploma-screen" class="hidden w-full max-w-5xl mx-auto text-[#0A4D68]">
+            <div class="diploma-container p-10 rounded-lg shadow-2xl relative">
+                <div class="text-center z-10 relative">
+                    <h2 class="text-2xl font-condensed tracking-widest text-gray-500">CERTIFICADO DE FINALIZACIÓN</h2>
+                    <h1 class="text-6xl font-black font-teko text-[#0A4D68] mt-2 mb-4">ESPECIALISTA EN GESTIÓN DE PROYECTOS</h1>
+                    <p class="text-base text-gray-600">Este certificado se otorga a:</p>
+                    <p id="diploma-name" class="text-5xl my-6 text-[#0A4D68]" style="font-family: 'Great Vibes', cursive;">Jefe/a de Proyecto</p>
+                    <p class="text-base text-gray-600 max-w-3xl mx-auto">Por haber completado exitosamente el entrenamiento intensivo, demostrando dominio en las siguientes competencias fundamentales de la gestión de proyectos:</p>
+                </div>
+                <div class="grid grid-cols-2 gap-x-12 gap-y-4 my-8 text-sm max-w-3xl mx-auto z-10 relative">
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Análisis de Proyectos vs. Operaciones</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Dominio del Ciclo de Vida del Proyecto</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Selección Estratégica de Metodologías</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Definición de Objetivos S.M.A.R.T.</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Gestión y Control de Alcance</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Estructura de Desglose del Trabajo (EDT)</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Asignación Eficiente de Recursos</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Planificación y Creación de Cronogramas</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Técnicas de Ejecución y Comunicación</span></div>
+                    <div class="flex items-center"><span class="text-teal-500 mr-3 text-lg">✓</span><span>Principios de Monitoreo y Finanzas</span></div>
+                </div>
+                <div class="flex justify-between items-center mt-10 z-10 relative">
+                    <div class="text-center">
+                        <p class="font-bold text-lg border-b-2 border-[#0A4D68] pb-1 px-4">Instructor Principal</p>
+                        <p class="text-sm mt-1">Talento Tech</p>
+                    </div>
+                    <div class="seal">
+                        <span class="seal-text">LOGRO<br>ALCANZADO</span>
+                    </div>
+                    <div class="text-center">
+                        <p class="font-bold text-lg border-b-2 border-[#0A4D68] pb-1 px-4">Fecha de Emisión</p>
+                        <p id="diploma-date" class="text-sm mt-1">18 de Septiembre, 2025</p>
+                    </div>
+                </div>
+            </div>
+             <div class="text-center mt-8">
+                <button onclick="window.print()" class="bg-[#0A4D68] text-white font-bold py-2 px-6 rounded-full mr-4 hover:opacity-90 transition-opacity">Imprimir Certificado</button>
+                <button id="diploma-back-to-menu-btn" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-full hover:bg-gray-500 transition-colors">Volver al Menú</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl p-8 max-w-lg w-full text-center modal-enter">
+            <h3 id="feedback-title" class="text-3xl font-bold mb-4"></h3>
+            <p id="feedback-text" class="text-gray-300 mb-6"></p>
+            <button id="next-button" class="bg-blue-500 text-white font-bold py-2 px-8 rounded-full transition-transform transform hover:scale-105">CONTINUAR</button>
+        </div>
+    </div>
+
+<script>
+const missions = {
+    lab1: {
+        title: "Operación: Cimientos",
+        challenge: "Un proyecto nace o muere en sus fundamentos. Demuestra que puedes distinguir una misión real de una simple tarea y guiarla desde su nacimiento.",
+        icon: "🚀",
+        totalQuestions: 10,
+        data: [
+            { stage: "Misión 1/10: Identidad", avatar: "🚀", title: "Informe de Mantenimiento", text: "El equipo de TI te informa que van a realizar el 'mantenimiento mensual de servidores'. ¿Debes gestionarlo como un nuevo proyecto?", options: [ { text: "No, es una operación de rutina.", isCorrect: true }, { text: "Sí, todo lo que hace TI es un proyecto.", isCorrect: false }, { text: "Depende de si usan software nuevo.", isCorrect: false }, { text: "Sí, porque requiere tiempo y personal.", isCorrect: false } ], feedback_correct: "¡Exacto! El mantenimiento es repetitivo y continuo. Es una OPERACIÓN. Un PROYECTO es temporal y crea algo único. ¡Distinguirlos es tu primer deber!", feedback_incorrect: "¡Cuidado! Si tratas las operaciones de rutina como proyectos, te ahogarás en papeleo. Los proyectos son para crear algo nuevo, no para mantener lo que ya existe." },
+            { stage: "Misión 2/10: Unicidad", avatar: "✨", title: "Proyecto 'Déjà Vu'", text: "Construiste una casa para un cliente. Ahora, su vecino quiere una exactamente igual. ¿Este segundo trabajo se considera un proyecto?", options: [ { text: "No, es una operación porque es repetitivo.", isCorrect: false }, { text: "Sí, porque tiene un cliente, ubicación y desafíos únicos.", isCorrect: true }, { text: "Solo si el presupuesto es diferente.", isCorrect: false }, { text: "No, porque el plano es el mismo.", isCorrect: false } ], feedback_correct: "¡Correcto! Aunque sea similar, es un proyecto ÚNICO. Tiene diferentes stakeholders (el vecino), una ubicación distinta y sus propias restricciones. ¡No hay dos proyectos iguales!", feedback_incorrect: "Incorrecto. Incluso si el producto final es casi idéntico, las circunstancias (cliente, entorno, equipo) lo convierten en un esfuerzo único, y por lo tanto, en un proyecto." },
+            { stage: "Misión 3/10: Temporalidad", avatar: "⏳", title: "Lanzamiento de App", text: "Tu equipo ha lanzado con éxito la versión 1.0 de una nueva aplicación. ¿En qué momento termina el PROYECTO de desarrollo?", options: [ { text: "Nunca, siempre hay que actualizarla.", isCorrect: false }, { text: "Cuando se entrega el resultado único y se aprueba.", isCorrect: true }, { text: "Cuando el equipo se cansa del proyecto.", isCorrect: false }, { text: "Cuando se agota el presupuesto inicial.", isCorrect: false } ], feedback_correct: "¡Perfecto! El proyecto termina al entregar el resultado único acordado (la v1.0). El trabajo que sigue (mantenimiento, actualizaciones) se convierte en una OPERACIÓN continua.", feedback_incorrect: "No exactamente. El desarrollo de la primera versión es el proyecto (temporal). El mantenimiento y las futuras actualizaciones son operaciones o nuevos proyectos." },
+            { stage: "Misión 4/10: Ciclo de Vida - Inicio", avatar: "🌱", title: "¡Luz Verde para TransLog!", text: "Acabas de recibir la aprobación oficial y el presupuesto inicial para el proyecto de logística de TransLog. ¿En qué fase del ciclo de vida te encuentras?", options: [ { text: "En la Ejecución, ¡a trabajar!", isCorrect: false }, { text: "En el Inicio, es el nacimiento del proyecto.", isCorrect: true }, { text: "En el Cierre, ¡ya casi terminamos!", isCorrect: false }, { text: "En la Planificación, hay que hacer el cronograma.", isCorrect: false } ], feedback_correct: "¡Correcto! La fase de INICIO es donde nace el proyecto. Aquí se define la idea, se obtiene la aprobación y se le da un nombre oficial. ¡Acabas de plantar la semilla!", feedback_incorrect: "¡Aún no! No podemos correr antes de caminar. La aprobación oficial es el banderazo de salida, la fase de INICIO. Después de esto, vendrá la planificación detallada." },
+            { stage: "Misión 5/10: Ciclo de Vida - Planificación", avatar: "📝", title: "Después del 'Sí'", text: "TransLog ha sido aprobado. El director te pregunta: '¿Qué sigue ahora?'. ¿Cuál es tu respuesta inmediata y profesional?", options: [ { text: "Desarrollar el Plan de Proyecto detallado.", isCorrect: true }, { text: "Contratar a los programadores inmediatamente.", isCorrect: false }, { text: "Empezar a codificar para ganar tiempo.", isCorrect: false }, { text: "Esperar las instrucciones del cliente día a día.", isCorrect: false } ], feedback_correct: "¡Impecable! Después del Inicio viene la PLANIFICACIÓN. Aquí se crea el mapa detallado: cronograma, recursos, riesgos... Es el cerebro de la operación.", feedback_incorrect: "¡Alto ahí! Contratar sin un plan detallado es como comprar los ingredientes sin tener la receta. Primero se planifica, luego se ejecuta." },
+            { stage: "Misión 6/10: Ciclo de Vida - Ejecución y Control", avatar: "🛠️", title: "Error Inesperado", text: "Durante la fase de Ejecución en TransLog, un programador descubre un error (bug) en el código. Al revisar y corregirlo, ¿qué otra fase se activa simultáneamente?", options: [ { text: "La fase de Cierre.", isCorrect: false }, { text: "La fase de Control.", isCorrect: true }, { text: "La fase de Inicio, hay que redefinir todo.", isCorrect: false }, { text: "La fase de Planificación, el plan falló.", isCorrect: false } ], feedback_correct: "¡Exacto! La Ejecución y el CONTROL van de la mano. Mientras el equipo trabaja (ejecuta), tú monitoreas (controlas) el progreso y corriges desviaciones, como los bugs.", feedback_incorrect: "No, el Cierre es la fase final. El CONTROL es la fase que se ejecuta en paralelo a la Ejecución para asegurar que todo vaya según el plan." },
+            { stage: "Misión 7/10: Ciclo de Vida - Cierre", avatar: "🏁", title: "¡Éxito en TransLog!", text: "El nuevo sistema de logística funciona a la perfección y el cliente firma su conformidad. ¿Cuál es el último paso para terminar formalmente?", options: [ { text: "Archivar los documentos y liberar al equipo.", isCorrect: true }, { text: "Tomar vacaciones inmediatamente.", isCorrect: false }, { text: "Empezar un nuevo proyecto enseguida.", isCorrect: false }, { text: "Hacer una fiesta y olvidarse del papeleo.", isCorrect: false } ], feedback_correct: "¡Así se hace! La fase de CIERRE es crucial. Se documentan las lecciones aprendidas, se entregan los informes finales y se disuelve oficialmente el equipo del proyecto.", feedback_incorrect: "¡Casi! Antes de las vacaciones, un buen líder se asegura de que el Cierre sea formal. Esto incluye la documentación y la liberación oficial de recursos." },
+            { stage: "Misión 8/10: Metodología Tradicional", avatar: "🏰", title: "Caso: TransLog", text: "El proyecto TransLog tiene un objetivo muy claro y requisitos bien definidos desde el principio. Es poco probable que cambien. ¿Qué metodología es la más segura y predecible?", options: [ { text: "Ágil, para ser flexibles.", isCorrect: false }, { text: "Tradicional (Cascada), para seguir un plan secuencial.", isCorrect: true }, { text: "Una metodología híbrida sin un plan claro.", isCorrect: false }, { text: "La metodología que elija el programador.", isCorrect: false } ], feedback_correct: "¡Correcto! La metodología TRADICIONAL o en Cascada es perfecta para proyectos predecibles. Su estructura secuencial (Inicio -> Planificación -> Ejecución...) asegura control y orden.", feedback_incorrect: "Aunque la flexibilidad es buena, para un proyecto con requisitos tan claros, una metodología Ágil podría ser innecesariamente compleja. Lo tradicional es más directo en este caso." },
+            { stage: "Misión 9/10: Metodología Ágil", avatar: "🌪️", title: "Caso: Fábrica IoT", text: "Para el proyecto de la Fábrica IoT, el cliente no tiene claros todos los requisitos. Es muy probable que pida cambios. ¿Qué tipo de metodología es más segura para esta situación?", options: [ { text: "Metodología Ágil (Scrum).", isCorrect: true }, { text: "Metodología en Cascada (Waterfall).", isCorrect: false }, { text: "Exigirle al cliente que se decida por todo ahora.", isCorrect: false }, { text: "Documentar cada posible cambio en un manual de 100 páginas.", isCorrect: false } ], feedback_correct: "¡Brillante estrategia! La metodología ÁGIL está diseñada para la incertidumbre. Permite hacer ajustes en ciclos cortos (sprints), mostrando avances y adaptándose a nuevas ideas.", feedback_incorrect: "¡Peligro! Un plan estricto (Cascada) con un cliente indeciso es una receta para el conflicto. Forzarlo a decidir todo al inicio generará frustración." },
+            { stage: "Misión 10/10: Triple Restricción", avatar: "⚖️", title: "¡Emergencia!", text: "El cliente de TransLog te pide terminar un mes antes (Tiempo). Como Jefe de Proyecto, ¿qué dos variables se verán afectadas inmediatamente?", options: [ { text: "El Costo y/o el Alcance.", isCorrect: true }, { text: "La calidad y la motivación del equipo.", isCorrect: false }, { text: "Nada, si el equipo es eficiente.", isCorrect: false }, { text: "Solo el estrés del Jefe de Proyecto.", isCorrect: false } ], feedback_correct: "¡Análisis de experto! Has identificado la Triple Restricción. Reducir el TIEMPO inevitablemente aumenta el COSTO (más gente, horas extra) o reduce el ALCANCE (entregar menos cosas).", feedback_incorrect: "La calidad y motivación son consecuencias, pero las variables directas de la Triple Restricción que debes negociar son el Costo y el Alcance." }
+        ]
+    },
+    lab2: {
+        title: "Directiva: Plan Maestro",
+        challenge: "El caos es el enemigo. Tu reto es forjar un plan de batalla perfecto, definiendo objetivos, límites, tareas y recursos para garantizar la victoria.",
+        icon: "🗺️",
+        totalQuestions: 10,
+        data: [
+            { stage: "Misión 1/10: Plan vs. Organización", avatar: "🧠", title: "¿Qué vs. Cómo?", text: "Definir que 'construiremos un coche eléctrico' es la Planificación. Asignar a 'Beto al motor y a Carla al chasis' es la...", options: [ { text: "Organización.", isCorrect: true }, { text: "También es Planificación.", isCorrect: false }, { text: "Ejecución.", isCorrect: false }, { text: "Control.", isCorrect: false } ], feedback_correct: "¡Correcto! La Planificación es el 'QUÉ' queremos hacer. La Organización es el 'CÓMO' lo vamos a hacer, distribuyendo tareas y recursos. ¡Dominas la diferencia!", feedback_incorrect: "No exactamente. Asignar tareas y recursos ya es parte de la Organización, es decir, el 'cómo' vamos a ejecutar el plan que ya se definió." },
+            { stage: "Misión 2/10: Objetivos S.M.A.R.T.", avatar: "🎯", title: "Objetivo Débil", text: "Tu equipo propone el objetivo: 'Mejorar la eficiencia de la fábrica'. ¿Por qué este objetivo es débil y corre riesgo de fracasar?", options: [ { text: "Porque no es Específico ni Medible.", isCorrect: true }, { text: "Porque es demasiado ambicioso.", isCorrect: false }, { text: "Porque no menciona el presupuesto.", isCorrect: false }, { text: "Porque el equipo no está de acuerdo.", isCorrect: false } ], feedback_correct: "¡Diagnóstico preciso! Un objetivo vago no se puede medir, y lo que no se mide, no se puede gestionar. 'Mejorar' no significa nada sin números concretos.", feedback_incorrect: "La ambición no es el problema, sino la falta de claridad. Un buen objetivo debe ser específico y medible para que sepas si has ganado o perdido." },
+            { stage: "Misión 3/10: Fortaleciendo Objetivos", avatar: "💪", title: "Mejorando la Misión", text: "Corriges el objetivo anterior a: 'Reducir el tiempo de inactividad de las máquinas un 15%'. ¿Qué elemento S.M.A.R.T. crucial le falta todavía?", options: [ { text: "La 'R' de Relevante.", isCorrect: false }, { text: "La 'T' de Tiempo.", isCorrect: true }, { text: "La 'A' de Alcanzable.", isCorrect: false }, { text: "La 'S' de Específico (Specific).", isCorrect: false } ], feedback_correct: "¡Perfecto! Sin un plazo, un objetivo es solo un sueño. Añadiendo '...en los próximos 6 meses', lo conviertes en un objetivo S.M.A.R.T. completo y profesional.", feedback_incorrect: "El objetivo es Relevante porque impacta el negocio. Lo que le falta es un límite de Tiempo para crear un sentido de urgencia y poder medir el éxito en un plazo concreto." },
+            { stage: "Misión 4/10: El Alcance", avatar: "🗺️", title: "¡Petición Inesperada!", text: "El cliente sugiere añadir cámaras de seguridad, algo no planificado. ¿Cómo proteges al proyecto del 'Scope Creep'?", options: [ { text: "Consultar el Alcance y explicarle qué está fuera de las fronteras.", isCorrect: true }, { text: "Aceptar para mantener feliz al cliente.", isCorrect: false }, { text: "Ignorar la petición y esperar que se le olvide.", isCorrect: false }, { text: "Decirle que sí, pero cobrarle el doble sin analizar el impacto.", isCorrect: false } ], feedback_correct: "¡Perfecto! El 'Alcance' es el muro protector de tu proyecto. Al usarlo como referencia, gestionas las expectativas y evitas que el proyecto se desborde.", feedback_incorrect: "¡Alerta roja de 'Scope Creep'! Aceptar trabajo extra sin analizarlo es la vía rápida al fracaso, agotando tus recursos y retrasando la entrega principal." },
+            { stage: "Misión 5/10: Proactividad", avatar: "💡", title: "Una Idea Brillante", text: "Un desarrollador tiene una idea para una nueva función genial que no está en el plan. ¿Cuál es la acción correcta como líder?", options: [ { text: "Implementarla en secreto.", isCorrect: false }, { text: "Agradecer la idea, documentarla para una 'Fase 2' y seguir con el plan actual.", isCorrect: true }, { text: "Rechazar la idea de inmediato para no distraer.", isCorrect: false }, { text: "Cambiar todo el plan para incluir la nueva función.", isCorrect: false } ], feedback_correct: "¡Gestión magistral! Reconoces la buena idea sin desviarte de la misión actual. Documentarla para el futuro mantiene al equipo motivado y al proyecto enfocado.", feedback_incorrect: "Implementar funciones fuera del alcance, incluso si son buenas, es una forma de autosabotaje. Rompe la planificación y consume recursos no asignados." },
+            { stage: "Misión 6/10: La EDT", avatar: "🌳", title: "La montaña de 'Instalar Sistema'.", text: "La tarea principal parece enorme y el equipo está paralizado. ¿Qué herramienta usas para dividir el trabajo en partes manejables?", options: [ { text: "La Estructura de Desglose del Trabajo (EDT).", isCorrect: true }, { text: "Una charla motivacional.", isCorrect: false }, { text: "Un diagrama de flujo de datos.", isCorrect: false }, { text: "El cronograma del proyecto.", isCorrect: false } ], feedback_correct: "¡Brillante! La EDT descompone el 'tronco' (proyecto) en 'ramas' (fases) y 'hojas' (tareas). Esto elimina la ansiedad y da pasos claros y concretos.", feedback_incorrect: "La motivación es buena, pero no es un plan. Sin una estructura clara, el equipo seguirá viendo una montaña. La EDT les proporciona un camino." },
+            { stage: "Misión 7/10: Jerarquía de la EDT", avatar: "📊", title: "Ordenando el Caos", text: "Tienes estas tareas: 1. Comprar Sensores, 2. Instalar Sistema IoT, 3. Instalar Sensores. ¿Cuál es el orden jerárquico correcto en una EDT (de mayor a menor)?", options: [ { text: "2 > 3 > 1", isCorrect: true }, { text: "1 > 3 > 2", isCorrect: false }, { text: "3 > 1 > 2", isCorrect: false }, { text: "Todos son del mismo nivel.", isCorrect: false } ], feedback_correct: "¡Estructura perfecta! Entiendes la lógica jerárquica: el gran objetivo (Instalar Sistema) se descompone en fases (Instalar Sensores), que a su vez contienen tareas específicas (Comprar Sensores).", feedback_incorrect: "No, el orden debe ir de lo más general a lo más específico. No puedes comprar sensores si no sabes qué sistema vas a instalar." },
+            { stage: "Misión 8/10: Recursos Humanos", avatar: "🧑‍🤝‍🧑", title: "Ensamblando al equipo ideal.", text: "Es momento de instalar los sensores, una tarea de alta precisión. ¿A quién del equipo le asignas esta misión crítica?", options: [ { text: "A Beto (Ingeniero Técnico), cuya especialidad es el hardware.", isCorrect: true }, { text: "A Carla (Capacitadora), para que practique.", isCorrect: false }, { text: "A Ana (Jefa de Proyecto), porque debe saber de todo.", isCorrect: false }, { text: "Al que se ofrezca voluntario primero.", isCorrect: false } ], feedback_correct: "¡Elección de experto! Asignar las tareas según las habilidades (Recursos Humanos) es clave para la excelencia y la eficiencia.", feedback_incorrect: "¡Decisión arriesgada! Colocar a la persona equivocada en una tarea crítica puede generar errores, retrasos y desmotivación." },
+            { stage: "Misión 9/10: Conflicto de Recursos", avatar: "💥", title: "Recurso Faltante", text: "El equipo necesita un servidor especial para analizar datos, pero no se incluyó en el presupuesto. ¿Qué dos restricciones del proyecto están ahora en conflicto directo?", options: [ { text: "El Alcance y el Costo.", isCorrect: true }, { text: "El Tiempo y los Riesgos.", isCorrect: false }, { text: "La Calidad y el Alcance.", isCorrect: false }, { text: "El Costo y el Tiempo.", isCorrect: false } ], feedback_correct: "¡Correcto! El ALCANCE (lo que hay que hacer) requiere algo que el COSTO (el presupuesto) no permite. Es un conflicto clásico que como líder debes resolver.", feedback_incorrect: "Aunque puede afectar el tiempo y generar riesgos, el conflicto inmediato y directo es entre lo que se necesita para cumplir el Alcance y el dinero disponible (Costo)." },
+            { stage: "Misión 10/10: El Cronograma", avatar: "🗓️", title: "¡El caos del tiempo!", text: "Unos prueban el software mientras otros aún no han instalado los sensores. ¿Qué implementas para crear un flujo de trabajo lógico?", options: [ { text: "Crear un Cronograma detallado con un Diagrama de Gantt.", isCorrect: true }, { text: "Pedirles que hagan horas extra.", isCorrect: false }, { text: "Hacer reuniones diarias hasta que se organicen solos.", isCorrect: false }, { text: "Dejar que cada uno decida sus propios plazos.", isCorrect: false } ], feedback_correct: "¡Maestría en gestión! El Cronograma pone todas las 'hojas' de tu EDT en una línea de tiempo secuencial, asegurando que nadie construya el techo antes que los cimientos.", feedback_incorrect: "¡Eso solo aumentará el estrés! Sin un Cronograma, el equipo seguirá trabajando de forma desordenada. Necesitan un plan de tiempo claro." }
+        ]
+    },
+    lab3: { title: "Protocolo: Ejecución", challenge: "La planificación ha terminado. Es hora de liderar al equipo en el campo de batalla, gestionar la comunicación y superar los obstáculos imprevistos.", icon: "⚙️", locked: true },
+    lab4: { title: "Vigilancia: Monitoreo", challenge: "Un buen líder siempre tiene los ojos en el objetivo. Tu misión es medir el progreso con KPIs, controlar el rendimiento y ajustar el rumbo cuando sea necesario.", icon: "📊", locked: true },
+    lab5: { title: "Campaña: Finanzas", challenge: "Todo proyecto tiene un tesoro que proteger: el presupuesto. Aprende a gestionarlo, controlar los costos y asegurar la rentabilidad de tu misión.", icon: "💰", locked: true },
+    final: {
+        title: "Prueba de Fuego",
+        challenge: "Esta es la prueba final. Un proyecto formativo que integra todos los conocimientos. Supera este desafío para obtener tu certificación de élite.",
+        icon: "🏆",
+        totalQuestions: 10,
+        locked: true,
+        data: [
+            // Lab 1 Questions
+            { stage: "Misión 1/10: Fundamentos", avatar: "🚀", title: "Análisis de Tareas", text: "Te piden 'crear una campaña de marketing para un nuevo producto'. ¿Es un proyecto o una operación?", options: [ { text: "Proyecto, porque tiene un inicio, un fin y un resultado único.", isCorrect: true }, { text: "Operación, porque el marketing es algo continuo.", isCorrect: false }, { text: "Depende del presupuesto.", isCorrect: false }, { text: "Ninguna, es solo una tarea.", isCorrect: false } ], feedback_correct: "¡Correcto! Una campaña específica es un proyecto. El marketing general de la empresa es una operación.", feedback_incorrect: "Incorrecto. Una campaña específica para un producto tiene un inicio y un fin definidos, y un objetivo único." },
+            { stage: "Misión 2/10: Fundamentos", avatar: "🌱", title: "Fase Clave", text: "Estás creando el cronograma y asignando el presupuesto para el proyecto. ¿En qué fase del ciclo de vida estás?", options: [ { text: "Planificación.", isCorrect: true }, { text: "Inicio.", isCorrect: false }, { text: "Ejecución.", isCorrect: false }, { text: "Cierre.", isCorrect: false } ], feedback_correct: "¡Exacto! El cronograma y el presupuesto son los entregables clave de la fase de Planificación.", feedback_incorrect: "No. El cronograma y el presupuesto se definen en la fase de Planificación, justo después del Inicio y antes de la Ejecución." },
+            // Lab 2 Questions
+            { stage: "Misión 3/10: Planificación", avatar: "🎯", title: "Objetivo Defectuoso", text: "Un objetivo dice: 'Aumentar las ventas significativamente este año'. ¿Cuál es su principal defecto S.M.A.R.T.?", options: [ { text: "No es Medible ('significativamente').", isCorrect: true }, { text: "No es Relevante.", isCorrect: false }, { text: "No es Alcanzable.", isCorrect: false }, { text: "Tiene un Tiempo definido.", isCorrect: false } ], feedback_correct: "¡Preciso! 'Significativamente' es subjetivo. Un objetivo S.M.A.R.T. debe ser cuantificable, como 'aumentar un 20%'.", feedback_incorrect: "El principal problema es que 'significativamente' no se puede medir, lo que hace imposible saber si se cumplió." },
+            { stage: "Misión 4/10: Planificación", avatar: "🌳", title: "El Poder de la EDT", text: "El equipo está confundido sobre las tareas específicas para 'desarrollar una app'. ¿Para qué sirve principalmente la EDT en este caso?", options: [ { text: "Para desglosar el trabajo en paquetes manejables.", isCorrect: true }, { text: "Para decidir el color de la app.", isCorrect: false }, { text: "Para escribir el código directamente.", isCorrect: false }, { text: "Para contratar más personal.", isCorrect: false } ], feedback_correct: "¡Correcto! La EDT es la herramienta fundamental para clarificar el trabajo, dividiéndolo en componentes más pequeños y fáciles de asignar.", feedback_incorrect: "No, la EDT es una herramienta de organización y desglose del trabajo, no de diseño o ejecución directa." },
+            // Lab 3 (Execution) Questions
+            { stage: "Misión 5/10: Ejecución", avatar: "🗣️", title: "Comunicación Rota", text: "Durante la Ejecución, el equipo de diseño y el de desarrollo no se hablan y entregan trabajos incompatibles. ¿Qué falló?", options: [ { text: "La gestión de la comunicación.", isCorrect: true }, { text: "La planificación del presupuesto.", isCorrect: false }, { text: "La definición del alcance.", isCorrect: false }, { text: "La selección de la metodología.", isCorrect: false } ], feedback_correct: "¡Bingo! Una comunicación fluida es vital en la Ejecución. Como líder, tu deber es asegurar que todos los equipos estén sincronizados.", feedback_incorrect: "Aunque otros factores pueden influir, el problema directo es la falta de comunicación entre los equipos durante la fase de trabajo." },
+            { stage: "Misión 6/10: Ejecución", avatar: "🔥", title: "Problema Crítico", text: "En plena Ejecución, el proveedor principal de un componente clave se declara en bancarrota. ¿Qué habilidad es crucial ahora?", options: [ { text: "La resolución de problemas y gestión de riesgos.", isCorrect: true }, { text: "La habilidad de culpar al proveedor.", isCorrect: false }, { text: "La capacidad de seguir el plan original sin cambios.", isCorrect: false }, { text: "La paciencia para esperar a que el problema se resuelva solo.", isCorrect: false } ], feedback_correct: "¡Así es! La Ejecución está llena de imprevistos. Un buen líder anticipa riesgos y actúa rápidamente para resolver problemas cuando surgen.", feedback_incorrect: "Un líder proactivo no espera ni culpa a otros. Enfrenta el problema y busca soluciones alternativas para mantener el proyecto a flote." },
+             // Lab 4 (Monitoring) Questions
+            { stage: "Misión 7/10: Monitoreo", avatar: "📊", title: "Midiendo el Pulso", text: "¿Cuál es el propósito principal de usar Indicadores Clave de Rendimiento (KPIs) durante la fase de Monitoreo?", options: [ { text: "Medir objetivamente el progreso contra los objetivos.", isCorrect: true }, { text: "Para generar informes largos y complejos.", isCorrect: false }, { text: "Para controlar cada minuto de trabajo del equipo.", isCorrect: false }, { text: "Solo son necesarios al final del proyecto.", isCorrect: false } ], feedback_correct: "¡Correcto! Los KPIs son el tablero de control del proyecto. Te dicen con datos si vas por buen camino o si necesitas ajustar el rumbo.", feedback_incorrect: "Los KPIs no son para microgestionar, sino para tener una visión objetiva y de alto nivel del progreso del proyecto hacia sus metas." },
+            { stage: "Misión 8/10: Monitoreo", avatar: "⚠️", title: "Alerta de Desviación", text: "Al Monitorear el proyecto, ves que el gasto real es un 30% mayor al planificado para esta fecha. ¿Cuál es tu primera acción?", options: [ { text: "Analizar la causa de la desviación y tomar acciones correctivas.", isCorrect: true }, { text: "Pedir más dinero inmediatamente sin investigar.", isCorrect: false }, { text: "Ignorarlo y esperar que se solucione solo el próximo mes.", isCorrect: false }, { text: "Reducir la calidad del producto para compensar.", isCorrect: false } ], feedback_correct: "¡Acción de líder! El monitoreo sirve para detectar desviaciones. El siguiente paso es analizar la causa raíz y aplicar una medida correctiva para volver al camino.", feedback_incorrect: "Ignorar una desviación o actuar sin analizarla solo empeorará el problema. Un buen líder investiga antes de actuar." },
+            // Lab 5 (Finance) Questions
+            { stage: "Misión 9/10: Finanzas", avatar: "💰", title: "Control de Costos", text: "Un miembro del equipo quiere comprar el software más caro del mercado 'porque es el mejor'. ¿Qué principio debes aplicar?", options: [ { text: "Evaluar si el costo se alinea con el valor que aporta y el presupuesto.", isCorrect: true }, { text: "Comprarlo inmediatamente para tener al equipo contento.", isCorrect: false }, { text: "Rechazarlo y comprar siempre la opción más barata.", isCorrect: false }, { text: "Dejar que el equipo decida sin supervisión.", isCorrect: false } ], feedback_correct: "¡Mentalidad de estratega! La gestión financiera no se trata de gastar mucho o poco, sino de gastar de forma inteligente, asegurando que cada costo esté justificado por el valor que aporta al proyecto.", feedback_incorrect: "Ni lo más caro ni lo más barato es siempre lo mejor. Las decisiones de compra deben basarse en un análisis de costo-beneficio alineado con el presupuesto." },
+            { stage: "Misión 10/10: Finanzas", avatar: "📈", title: "Presupuesto", text: "Estás creando el presupuesto para un nuevo proyecto de software. ¿Cuál de estos NO es un costo directo que debas incluir?", options: [ { text: "El alquiler de las oficinas centrales de la empresa.", isCorrect: true }, { text: "Los salarios de los desarrolladores del proyecto.", isCorrect: false }, { text: "Las licencias del software de programación.", isCorrect: false }, { text: "El costo de los servidores para la app.", isCorrect: false } ], feedback_correct: "¡Ojo de águila! El alquiler de la oficina es un costo operativo o indirecto de la empresa, no un costo directo atribuible únicamente a tu proyecto. ¡Has demostrado entender la diferencia!", feedback_incorrect: "Incorrecto. Los salarios del equipo, las licencias y los servidores son costos directos, es decir, gastos que existen únicamente por y para tu proyecto." }
+        ]
+    }
+};
+
+let missionProgress;
+let currentMissionKey;
+let currentQuestionIndex;
+let currentScore;
+let sessionHistory;
+let playerName = '';
+
+const nameScreen = document.getElementById('name-screen');
+const mainMenu = document.getElementById('main-menu');
+const gameScreen = document.getElementById('game-screen');
+const resultsScreen = document.getElementById('results-screen');
+const diplomaScreen = document.getElementById('diploma-screen');
+const feedbackModal = document.getElementById('feedback-modal');
+
+// --- UI Elements ---
+const playerNameInput = document.getElementById('player-name');
+const welcomeMessage = document.getElementById('welcome-message');
+const missionsGrid = document.getElementById('missions-grid');
+const stageNameEl = document.getElementById('stage-name');
+const scoreEl = document.getElementById('score');
+const progressBarEl = document.getElementById('progress-bar');
+const avatarEl = document.getElementById('avatar');
+const questionTitleEl = document.getElementById('question-title');
+const questionTextEl = document.getElementById('question-text');
+const optionsContainer = document.getElementById('options-container');
+const feedbackTitleEl = document.getElementById('feedback-title');
+const feedbackTextEl = document.getElementById('feedback-text');
+const resultsContainer = document.getElementById('results-container');
+const resultsTitle = document.getElementById('results-title');
+const diplomaNameEl = document.getElementById('diploma-name');
+const diplomaDateEl = document.getElementById('diploma-date');
+
+// --- Buttons ---
+const submitNameButton = document.getElementById('submit-name-button');
+const nextButton = document.getElementById('next-button');
+const resetAllButton = document.getElementById('reset-all-button');
+document.getElementById('back-to-menu-btn').addEventListener('click', showMainMenu);
+document.getElementById('results-back-to-menu-btn').addEventListener('click', showMainMenu);
+document.getElementById('diploma-back-to-menu-btn').addEventListener('click', showMainMenu);
+
+
+function initializeApp() {
+    const savedName = localStorage.getItem('playerName');
+    if (savedName) {
+        playerName = savedName;
+        initializeProgress();
+        showMainMenu();
+    } else {
+        nameScreen.classList.remove('hidden');
+    }
+}
+
+function submitName() {
+    const name = playerNameInput.value.trim();
+    if (name) {
+        playerName = name;
+        localStorage.setItem('playerName', playerName);
+        initializeProgress();
+        showMainMenu();
+    } else {
+        alert("Por favor, introduce un nombre.");
+    }
+}
+
+function initializeProgress() {
+    const savedProgress = localStorage.getItem('missionProgress');
+    if (savedProgress) {
+        missionProgress = JSON.parse(savedProgress);
+    } else {
+        missionProgress = {
+            lab1: { completed: false, score: 0, history: [] },
+            lab2: { completed: false, score: 0, history: [] },
+            lab3: { completed: false, score: 0, history: [] },
+            lab4: { completed: false, score: 0, history: [] },
+            lab5: { completed: false, score: 0, history: [] },
+            final: { completed: false, score: 0, history: [] },
+        };
+        saveProgress();
+    }
+}
+
+function saveProgress() {
+    localStorage.setItem('missionProgress', JSON.stringify(missionProgress));
+}
+
+function showMainMenu() {
+    nameScreen.classList.add('hidden');
+    gameScreen.classList.add('hidden');
+    resultsScreen.classList.add('hidden');
+    diplomaScreen.classList.add('hidden');
+    mainMenu.classList.remove('hidden');
+    welcomeMessage.textContent = `Bienvenido/a, Jefe/a de Proyecto ${playerName}.`;
+    renderMissionsGrid();
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function renderMissionsGrid() {
+    missionsGrid.innerHTML = '';
+
+    const requiredMissions = ['lab1', 'lab2', 'lab3', 'lab4', 'lab5'];
+    const allRequiredComplete = requiredMissions.every(key => missionProgress[key] && missionProgress[key].completed);
+    
+    missions.final.locked = !allRequiredComplete;
+
+    Object.keys(missions).forEach(key => {
+        const mission = missions[key];
+        const progress = missionProgress[key];
+        const card = document.createElement('div');
+        card.className = `flex flex-col text-left p-6 glass-card rounded-2xl border-2 border-gray-700 transition-all duration-300 mission-card ${mission.locked ? 'locked opacity-60 cursor-not-allowed' : 'cursor-pointer'}`;
+        
+        const isCompleted = progress && progress.completed;
+        const scorePercentage = isCompleted ? (progress.score / mission.totalQuestions) * 100 : 0;
+
+        let actionButton;
+        if (key === 'final' && !mission.locked) {
+             actionButton = `
+                <button class="mt-auto w-full bg-yellow-500 text-black font-bold py-2 px-4 rounded-full start-mission-btn hover:bg-yellow-400">Iniciar Prueba Final</button>
+                <button class="mt-2 w-full bg-gray-600 text-white text-sm font-bold py-1 px-3 rounded-full demo-diploma-btn">Demo del Certificado</button>
+             `;
+             if(isCompleted){
+                actionButton += `<button class="mt-2 w-full bg-green-600 text-white font-bold py-2 px-4 rounded-full view-results-btn hover:bg-green-500">Ver Informe</button>`;
+             }
+        } else if (mission.locked) {
+            actionButton = `<button disabled class="mt-auto w-full bg-gray-600 text-gray-400 font-bold py-2 px-4 rounded-full">BLOQUEADO</button>`;
+        } else if (isCompleted) {
+            actionButton = `
+                <button class="mt-auto w-full bg-green-600 text-white font-bold py-2 px-4 rounded-full view-results-btn hover:bg-green-500">Ver Informe</button>
+                <button class="mt-2 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-full retry-mission-btn hover:bg-blue-500">Reintentar Misión</button>
+            `;
+        } else {
+            actionButton = `<button class="mt-auto w-full bg-cyan-500 text-black font-bold py-2 px-4 rounded-full start-mission-btn hover:bg-cyan-400">Iniciar Misión</button>`;
+        }
+
+        card.innerHTML = `
+            <div class="flex-grow">
+                <div class="flex items-center mb-3">
+                    <span class="text-4xl mr-4">${mission.icon || '❓'}</span>
+                    <h3 class="text-2xl font-bold font-condensed">${mission.title}</h3>
+                </div>
+                <p class="text-gray-400 text-sm mb-4 h-24">${mission.challenge}</p>
+                <div class="mb-4">
+                    <div class="flex justify-between items-center text-xs text-gray-300 mb-1">
+                        <span>PROGRESO</span>
+                        <span>${isCompleted ? `${progress.score}/${mission.totalQuestions}` : 'N/A'}</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-gradient-to-r from-cyan-400 to-blue-500 h-2.5 rounded-full" style="width: ${scorePercentage}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4 border-t border-gray-700/50">
+                ${actionButton}
+            </div>
+        `;
+
+        if (!mission.locked) {
+            card.addEventListener('click', (e) => {
+                if (e.target.classList.contains('start-mission-btn') || e.target.classList.contains('retry-mission-btn')) {
+                    startGame(key);
+                } else if (e.target.classList.contains('view-results-btn')) {
+                    showResults(key);
+                } else if (e.target.classList.contains('demo-diploma-btn')) {
+                    showDiploma();
+                }
+            });
+        }
+        missionsGrid.appendChild(card);
+    });
+}
+
+function startGame(missionKey) {
+    currentMissionKey = missionKey;
+    currentQuestionIndex = 0;
+    currentScore = 0;
+    sessionHistory = [];
+    mainMenu.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    displayQuestion();
+}
+
+function displayQuestion() {
+    const question = missions[currentMissionKey].data[currentQuestionIndex];
+    stageNameEl.textContent = question.stage;
+    updateProgress();
+    avatarEl.textContent = question.avatar;
+    questionTitleEl.textContent = question.title;
+    questionTextEl.textContent = question.text;
+    optionsContainer.innerHTML = '';
+    
+    const shuffledOptions = [...question.options];
+    shuffleArray(shuffledOptions);
+
+    shuffledOptions.forEach(option => {
+        const button = document.createElement('button');
+        button.textContent = option.text;
+        button.className = 'w-full text-left p-4 glass-card rounded-lg border-2 border-gray-700 transition-all duration-300 option-button';
+        button.onclick = () => selectAnswer(option);
+        optionsContainer.appendChild(button);
+    });
+}
+
+function selectAnswer(selectedOption) {
+    const isCorrect = selectedOption.isCorrect;
+    if (isCorrect) {
+        currentScore++;
+    }
+    sessionHistory.push({
+        question: missions[currentMissionKey].data[currentQuestionIndex],
+        selectedAnswer: selectedOption.text,
+        isCorrect: isCorrect
+    });
+    showFeedback(isCorrect);
+}
+
+function showFeedback(isCorrect) {
+    const question = missions[currentMissionKey].data[currentQuestionIndex];
+    feedbackModal.classList.remove('hidden', 'modal-leave');
+    feedbackModal.classList.add('modal-enter');
+    if (isCorrect) {
+        feedbackTitleEl.textContent = "✅ ¡Decisión Correcta!";
+        feedbackTitleEl.className = "text-3xl font-bold mb-4 text-green-400";
+        feedbackTextEl.textContent = question.feedback_correct;
+    } else {
+        feedbackTitleEl.textContent = "❌ ¡Cuidado, Jefe/a!";
+        feedbackTitleEl.className = "text-3xl font-bold mb-4 text-red-400";
+        feedbackTextEl.textContent = question.feedback_incorrect;
+    }
+}
+
+function nextQuestion() {
+    feedbackModal.classList.remove('modal-enter');
+    feedbackModal.classList.add('modal-leave');
+    setTimeout(() => {
+        feedbackModal.classList.add('hidden');
+        currentQuestionIndex++;
+        if (currentQuestionIndex < missions[currentMissionKey].data.length) {
+            displayQuestion();
+        } else {
+            endMission();
+        }
+    }, 300);
+}
+
+function updateProgress() {
+    const totalQuestions = missions[currentMissionKey].data.length;
+    const progressPercentage = (currentQuestionIndex / totalQuestions) * 100;
+    progressBarEl.style.width = `${progressPercentage}%`;
+    const scorePercentage = currentQuestionIndex > 0 ? (currentScore / currentQuestionIndex) * 100 : 0;
+    scoreEl.textContent = `EFECTIVIDAD: ${Math.round(scorePercentage)}%`;
+}
+
+function endMission() {
+    missionProgress[currentMissionKey].completed = true;
+    missionProgress[currentMissionKey].score = currentScore;
+    missionProgress[currentMissionKey].history = sessionHistory;
+    saveProgress();
+
+    if (currentMissionKey === 'final') {
+        showDiploma();
+    } else {
+        showResults(currentMissionKey);
+    }
+}
+
+function showResults(missionKey) {
+    mainMenu.classList.add('hidden');
+    gameScreen.classList.add('hidden');
+    diplomaScreen.classList.add('hidden');
+    resultsScreen.classList.remove('hidden');
+
+    const mission = missions[missionKey];
+    const progress = missionProgress[missionKey];
+    resultsTitle.textContent = `INFORME DE MISIÓN: ${mission.title}`;
+    
+    resultsContainer.innerHTML = `
+        <div class="glass-card rounded-2xl p-6 text-center mb-6">
+            <p class="font-condensed text-xl text-gray-300">PUNTUACIÓN FINAL</p>
+            <p class="text-6xl font-black ${progress.score / mission.totalQuestions >= 0.8 ? 'text-green-400' : 'text-yellow-400'}">
+                ${progress.score}/${mission.totalQuestions}
+            </p>
+        </div>
+    `;
+
+    progress.history.forEach((entry, index) => {
+        const question = entry.question;
+        const resultCard = document.createElement('div');
+        resultCard.className = 'glass-card rounded-2xl p-6';
+        
+        const answerClass = entry.isCorrect ? 'text-green-400' : 'text-red-400';
+        const answerIcon = entry.isCorrect ? '✅' : '❌';
+
+        resultCard.innerHTML = `
+            <p class="font-bold mb-2">${question.stage.split(':')[0]}: ${question.title}</p>
+            <p class="text-gray-400 text-sm mb-3">"${question.text}"</p>
+            <p class="mb-1">Tu respuesta (${playerName}): <span class="${answerClass} font-semibold">${answerIcon} ${entry.selectedAnswer}</span></p>
+            <div class="mt-2 pt-2 border-t border-gray-700/50">
+                <p class="text-xs text-cyan-300">${entry.isCorrect ? question.feedback_correct : question.feedback_incorrect}</p>
+            </div>
+        `;
+        resultsContainer.appendChild(resultCard);
+    });
+}
+
+function showDiploma() {
+    mainMenu.classList.add('hidden');
+    gameScreen.classList.add('hidden');
+    resultsScreen.classList.add('hidden');
+    diplomaScreen.classList.remove('hidden');
+
+    diplomaNameEl.textContent = playerName;
+    const today = new Date();
+    const dateString = today.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    diplomaDateEl.textContent = dateString;
+}
+
+function resetAllProgress() {
+    if (confirm("¿Estás seguro de que quieres reiniciar todo tu progreso? Esta acción no se puede deshacer.")) {
+        localStorage.removeItem('missionProgress');
+        localStorage.removeItem('playerName');
+        playerName = '';
+        playerNameInput.value = '';
+        mainMenu.classList.add('hidden');
+        nameScreen.classList.remove('hidden');
+    }
+}
+
+// Event Listeners
+submitNameButton.addEventListener('click', submitName);
+playerNameInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') submitName();
+});
+nextButton.addEventListener('click', nextQuestion);
+resetAllButton.addEventListener('click', resetAllProgress);
+
+// Initial load
+initializeApp();
+
+</script>
+</body>
+</html>
+
